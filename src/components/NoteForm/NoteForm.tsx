@@ -3,6 +3,7 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import type { FormikHelpers } from "formik";
 import type { Note } from "../../types/note";
 import * as Yup from "yup";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function NoteForm() {
   const handleSubmit = (values: Note, actions: FormikHelpers<Note>) => {
@@ -24,6 +25,15 @@ export default function NoteForm() {
     content: Yup.string().max(500, "Text is too long"),
     tag: Yup.string().required("Tag is required"),
   });
+
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: (newNote: CreateTaskRequest) => createTask(newTask),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
+
   return (
     <Formik
       initialValues={initialValues}
