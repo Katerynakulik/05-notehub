@@ -1,21 +1,18 @@
 import css from "./SearchBox.module.css";
-import type { DebouncedState } from "use-debounce";
 
 interface Props {
-  onSearch: DebouncedState<(val: string) => void>;
-  value: string;
+  handleSearch: (value: string) => void;
 }
-const SearchBox = ({ onSearch, value }: Props) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onSearch(e.target.value);
+const SearchBox = ({ handleSearch }: Props) => {
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleSearch(e.target.value);
   };
   return (
     <input
       className={css.input}
       type="text"
-      defaultValue={value}
-      onChange={handleChange}
       placeholder="Search notes"
+      onChange={onChange}
     />
   );
 };

@@ -1,23 +1,74 @@
-import { useState } from "react";
 import css from "./App.module.css";
+import NoteList from "../NoteList/NoteList";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  fetchNotes,
+  type FetchNotesResponse,
+} from "../../services/noteService";
+import SearchBox from "../SearchBox/SearchBox";
+import Pagination from "../Pagination/Pagination";
+import Modal from "../Modal/Modal";
+import NoteForm from "../NoteForm/NoteForm";
+import { useDebounce } from "use-debounce";
 
 function App() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["notes"],
-    queryFn: getNotes,
+  const [isOpenModal, setIsOpenModal] = useState(false);
+  const [query, setQuery] = useState("");
+  const [debouncedQuery] = useDebounce(query, 500);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const { data, isLoading, error } = useQuery<FetchNotesResponse>({
+    queryKey: ["notes", debouncedQuery, currentPage],
+    queryFn: () =>
+      fetchNotes({ search: debouncedQuery, page: currentPage, perPage: 12 }),
+    enabled: true,
+    placeholderData: (prev) => prev,
   });
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedQuery]);
+
+  const handleSearch = (value: string) => {
+    setQuery(value);
+    console.log("searching for", value);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <>
       <div className={css.app}>
         <header className={css.toolbar}>
           {/* Компонент SearchBox */}
+          {<SearchBox handleSearch={handleSearch} />}
           {/* Пагінація */}
+          {/* условие что рендер будет в случае если в коллекции будет 1+ компонент */}
+          {data && data.totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={data.totalPages}
+              onPageChange={handlePageChange}
+            />
+          )}
+
           {/* Кнопка створення нотатки */}
+          <button className={css.button} onClick={() => setIsOpenModal(true)}>
+            Create note +
+          </button>
         </header>
+        {isLoading && <p>Loading...</p>}
+        {error && <p>Error loading notes</p>}
+        {data && <NoteList notes={data.notes} />}
       </div>
+      {isOpenModal && (
+        <Modal onClose={() => setIsOpenModal(false)}>
+          <NoteForm onCancel={() => setIsOpenModal(false)} />
+        </Modal>
+      )}
     </>
   );
 }
