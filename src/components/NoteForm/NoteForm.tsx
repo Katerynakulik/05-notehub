@@ -22,7 +22,12 @@ export default function NoteForm({ onCancel }: NoteFormProps) {
       .max(50, "Name is too long")
       .required("Name is required"),
     content: Yup.string().max(500, "Text is too long"),
-    tag: Yup.string().required("Tag is required"),
+    tag: Yup.string()
+      .oneOf(
+        ["Todo", "Work", "Personal", "Meeting", "Shopping"],
+        "Invalid tag value"
+      )
+      .required("Tag is required"),
   });
 
   const queryClient = useQueryClient();
